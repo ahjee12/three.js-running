@@ -16,7 +16,8 @@ import { TextSection } from "./TextSection";
 const LINE_NB_POINTS = 1000;
 const CURVE_DISTANCE = 250;
 const CLOUD2_X_OFFSETS = [-20, 20, 30, -40, -35, 35, -25, -17];
-const CLOUD2_SCALE = 2;
+const CLOUD1_X_SPREAD = 10;
+const CLOUD2_SCALE = 4;
 const CURVE_AHEAD_CAMERA = 0.008;
 const CURVE_AHEAD_AIRPLANE = 0.02;
 const AIRPLANE_MAX_ANGLE = 8;
@@ -766,9 +767,27 @@ export const Experience = () => {
 
         {/* 구름 */}
         <Suspense fallback={null}>
-          {clouds.map((cloud, index) => (
-            <Cloud sceneOpacity={sceneOpacity} {...cloud} key={index} />
-          ))}
+          {clouds.map((cloud, index) => {
+            if (cloud.path?.includes("cloud2")) {
+              return (
+                <Cloud sceneOpacity={sceneOpacity} {...cloud} key={index} />
+              );
+            }
+            const position = cloud.position.clone();
+            if (position.x > 0) {
+              position.x += CLOUD1_X_SPREAD;
+            } else if (position.x < 0) {
+              position.x -= CLOUD1_X_SPREAD;
+            }
+            return (
+              <Cloud
+                sceneOpacity={sceneOpacity}
+                {...cloud}
+                position={position}
+                key={index}
+              />
+            );
+          })}
         </Suspense>
       </>
   );

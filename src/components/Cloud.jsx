@@ -38,7 +38,7 @@ export function Cloud({
     <mesh geometry={cloudGeometry(nodes, path)} {...props}>
       <meshStandardMaterial
         ref={materialRef}
-        envMapIntensity={2}
+        envMapIntensity={0}
         transparent
         opacity={0}
         onBeforeCompile={fadeOnBeforeCompile}
