@@ -1,0 +1,520 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter&display=swap");
+
+@font-face {
+  font-family: "Renaissance";
+  src: url("/fonts/renaissance-Korean.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "HeirOfLight";
+  src: url("/fonts/HeirofLightRegular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DNFForgedBladeLight";
+  src: url("/fonts/DNFForgedBlade-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DNFForgedBlade";
+  src: url("/fonts/DNFForgedBlade-Bold.ttf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+html,
+body,
+#root {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  background: linear-gradient(
+    180deg,
+    var(--sky-top, #3535cc) 0%,
+    var(--sky-top, #3535cc) 28%,
+    var(--sky-bottom, #ABD6FF) 72%
+  );
+}
+
+::-webkit-scrollbar {
+  width: 2px;
+}
+
+/* 스크롤 트랙 */
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.23);
+}
+
+/* 스크롤 핸들 */
+::-webkit-scrollbar-thumb {
+  background: white;
+  height: 10%;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  z-index: 2;
+}
+
+.overlay--disable {
+  pointer-events: none;
+}
+
+.overlay--disable * {
+  pointer-events: none;
+}
+
+.loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: white;
+  z-index: 5;
+  transition: opacity 2s ease-in-out;
+}
+
+.loader--disappear {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.intro {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  height: 100%;
+}
+
+.logo {
+  font-family: "DNFForgedBlade", serif;
+  color: white;
+  font-size: 5.5rem;
+  letter-spacing: 0.25rem;
+  text-align: center;
+  white-space: nowrap;
+  padding: 0;
+  margin: 0;
+  opacity: 0;
+  transform: translateY(-50%);
+  transform-origin: center top;
+  position: absolute;
+  top: 50vh;
+  animation: none;
+  transition: none;
+}
+
+.intro--enter:not(.intro--disappear):not(.intro--ready) .logo {
+  animation: fadeUp 2.4s ease-in-out 2s both;
+}
+
+.intro--enter:not(.intro--disappear):not(.intro--ready) .intro__button {
+  animation: fadeIn 2.4s ease-in-out 4s both;
+}
+
+.intro--pending .logo,
+.intro--pending .intro__button {
+  animation: none;
+  opacity: 0;
+}
+
+.intro.intro--disappear .logo {
+  animation: logoToTop 2s ease-in-out forwards;
+}
+
+.intro--ready .logo {
+  animation: none;
+  transition: none;
+  opacity: 1;
+  top: 50vh;
+  transform: translateY(-50%);
+}
+
+.spinner {
+  position: absolute;
+  right: 0px;
+  top: 0px;
+  margin-right: -42px;
+  margin-top: -42px;
+  animation: fadeIn 2.4s ease-in-out 1.2s forwards;
+  opacity: 0;
+}
+
+.spinner__image {
+  width: 164px;
+  height: 164px;
+  background-size: contain;
+  animation: rotate 10s linear infinite;
+}
+
+.intro--disappear .spinner {
+  opacity: 1;
+  animation: fadeOut 1s ease-in-out forwards;
+}
+
+.intro__scroll {
+  opacity: 0;
+  color: white;
+  font-family: "DNFForgedBladeLight", sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0.05rem;
+  position: absolute;
+  top: 24vh;
+}
+
+.intro--disappear .intro__scroll {
+  animation: fadeIn 1s ease-in-out 1.5s forwards;
+}
+
+.overlay--scrolled .intro__scroll {
+  animation: fadeOut 1s ease-in-out forwards;
+}
+
+.intro__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 1.5rem;
+  margin-top: 220px;
+}
+
+.intro__action {
+  position: relative;
+  display: flex;
+}
+
+.intro__action--hidden {
+  display: none;
+}
+
+.intro__tooltip {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  max-width: 27rem;
+  padding: 0.75rem 1rem;
+  overflow-wrap: break-word;
+  border-radius: 16px;
+  background: rgba(53, 53, 204, 0.9);
+  color: white;
+  font-family: "Inter", sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  text-align: left;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2;
+  transition: opacity 0.42s ease-in-out;
+}
+
+/* 버튼에서 툴팁으로 마우스를 옮길 때 호버 영역이 끊기지 않도록
+   툴팁 위 간격을 이어 줌. */
+.intro__tooltip:before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 0.75rem;
+}
+
+.intro__action:hover .intro__tooltip {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.intro__tooltip-reference {
+  display: flex;
+  gap: 0.3rem;
+}
+
+/* 안내 문구를 라벨 아래가 아니라 URL 시작 위치에 맞춰 쌓음. */
+.intro__tooltip-reference-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.intro__tooltip-link {
+  color: white;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.intro__tooltip-link:hover {
+  text-decoration-thickness: 2px;
+}
+
+.intro__button {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 1rem 2rem;
+  border: none;
+  font-family: "DNFForgedBlade", serif;
+  font-size: 1.25rem;
+  letter-spacing: 0.25rem;
+  line-height: 1;
+  color: #3535cc;
+  background: white;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  transition: 0.42s ease-in-out;
+  animation: fadeIn 2.4s ease-in-out 2s forwards;
+  opacity: 0;
+}
+
+.intro__button:after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 110%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: #3535cc;
+  z-index: -1;
+  pointer-events: none;
+  transform: translateX(-50%);
+  transition: top 0.85s cubic-bezier(0.4, 0, 0.2, 1),
+    border-radius 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.intro__button:hover,
+.intro__button--armed,
+.intro--disappear .intro__button {
+  color: white;
+}
+
+.intro__button:hover:after,
+.intro__button--armed:after,
+.intro--disappear .intro__button:after {
+  top: -20%;
+  border-radius: 0;
+  transition: top 1.2s cubic-bezier(0.22, 0.7, 0.2, 1),
+    border-radius 1.35s cubic-bezier(0.33, 0.05, 0.2, 1);
+}
+
+.intro--disappear .intro__button {
+  animation: fadeOut 1s ease-in-out forwards;
+}
+
+.intro--ready .intro__button {
+  animation: none;
+  opacity: 1;
+}
+
+.outro {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.outro--appear {
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 4s ease-in-out;
+}
+
+.outro__text {
+  font-family: "DNFForgedBladeLight", sans-serif;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.outro__button {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 1rem 2rem;
+  border: none;
+  font-family: "DNFForgedBlade", serif;
+  font-size: 1.25rem;
+  letter-spacing: 0.25rem;
+  line-height: 1;
+  color: #3535cc;
+  background: white;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  transition: 0.42s ease-in-out;
+}
+
+.outro__button:after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 110%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: #3535cc;
+  z-index: -1;
+  pointer-events: none;
+  transform: translateX(-50%);
+  transition: top 0.85s cubic-bezier(0.4, 0, 0.2, 1),
+    border-radius 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.outro__button:hover,
+.outro__button--armed {
+  color: white;
+}
+
+.outro__button:hover:after,
+.outro__button--armed:after {
+  top: -20%;
+  border-radius: 0;
+  transition: top 1.2s cubic-bezier(0.22, 0.7, 0.2, 1),
+    border-radius 1.35s cubic-bezier(0.33, 0.05, 0.2, 1);
+}
+
+/* 반응형 */
+
+@media screen and (max-width: 768px) {
+  .logo {
+    font-size: 2.25rem;
+    letter-spacing: 0.12rem;
+  }
+
+  .intro.intro--disappear .logo {
+    animation: logoToTopMobile 2s ease-in-out forwards;
+  }
+
+  .spinner__image {
+    width: 82px;
+    height: 82px;
+  }
+
+  .intro__actions {
+    gap: 1rem;
+  }
+
+  .intro__button {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  .intro__tooltip {
+    max-width: 74vw;
+    font-size: 0.8125rem;
+  }
+
+  .outro__text {
+    font-size: 1rem;
+  }
+
+  .outro__button {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+  }
+}
+
+/* 애니메이션 */
+
+@keyframes fadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(calc(-50% + 100px));
+    filter: blur(9px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(-50%);
+    filter: none;
+  }
+}
+
+@keyframes logoToTop {
+  0% {
+    opacity: 1;
+    top: 50vh;
+    transform: translateY(-50%) scale(1);
+    filter: none;
+  }
+
+  100% {
+    opacity: 1;
+    top: 42px;
+    transform: translateY(0) scale(0.25);
+    filter: none;
+  }
+}
+
+@keyframes logoToTopMobile {
+  0% {
+    opacity: 1;
+    top: 50vh;
+    transform: translateY(-50%) scale(1);
+    filter: none;
+  }
+
+  100% {
+    opacity: 1;
+    top: 24px;
+    transform: translateY(0) scale(0.5);
+    filter: none;
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes rotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
