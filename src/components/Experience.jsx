@@ -16,6 +16,16 @@ import { TextSection } from "./TextSection";
 const LINE_NB_POINTS = 1000;
 const CURVE_DISTANCE = 250;
 const CLOUD2_X_OFFSETS = [-20, 20, 30, -40, -35, 35, -25, -17];
+const CLOUD2_ROTATIONS = [
+  new Euler(-Math.PI / 5, 0, 0),
+  new Euler(Math.PI / 7, 0, 0),
+  new Euler(Math.PI / 5, 0, 0),
+  new Euler(Math.PI / 4, 0, 0),
+  new Euler(Math.PI / 3, 0, 0),
+  new Euler(-Math.PI / 6, 0, 0),
+  new Euler(-Math.PI / 4, 0, 0),
+  new Euler(Math.PI / 6, 0, 0),
+];
 const CLOUD1_X_SPREAD = 10;
 const CLOUD2_SCALE = 4;
 const CURVE_AHEAD_CAMERA = 0.008;
@@ -370,6 +380,7 @@ export const Experience = () => {
           point.y + 8,
           point.z - 120
         ),
+        rotation: CLOUD2_ROTATIONS[index],
       })),
     ],
     []
@@ -708,7 +719,7 @@ export const Experience = () => {
 
   return (
       <>
-        <directionalLight position={[0, 3, 1]} intensity={0.1} />
+        <directionalLight position={[0, 3, 1]} intensity={0.3} />
         <group ref={cameraGroup}>
           <Speed />
           <Background backgroundColors={backgroundColors} />

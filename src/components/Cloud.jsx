@@ -1,6 +1,6 @@
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { fadeOnBeforeCompile } from "../utils/fadeMaterial";
 
 const CLOUD_1 = "/models/cloud/cloud1.glb";
@@ -20,6 +20,16 @@ const cloudGeometry = (nodes, path = "") => {
   );
 };
 
+const bindCloudMaterial = (mat) => {
+  if (!mat) {
+    return;
+  }
+  mat.envMapIntensity = 0;
+  mat.metalness = 0;
+  mat.roughness = 1;
+  mat.depthWrite = true;
+};
+
 export function Cloud({
   sceneOpacity,
   path = CLOUD_1,
@@ -28,16 +38,27 @@ export function Cloud({
   const { nodes } = useGLTF(path);
   const materialRef = useRef();
 
+  useLayoutEffect(() => {
+    bindCloudMaterial(materialRef.current);
+  }, []);
+
   useFrame(() => {
-    if (materialRef.current) {
-      materialRef.current.opacity = sceneOpacity.current;
+    const mat = materialRef.current;
+    if (!mat) {
+      return;
     }
+    bindCloudMaterial(mat);
+    mat.transparent = true;
+    mat.opacity = sceneOpacity.current;
   });
 
   return (
     <mesh geometry={cloudGeometry(nodes, path)} {...props}>
       <meshStandardMaterial
         ref={materialRef}
+        color="#ffffff"
+        metalness={0}
+        roughness={1}
         envMapIntensity={0}
         transparent
         opacity={0}

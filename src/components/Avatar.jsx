@@ -1,35 +1,12 @@
 import { useAnimations, useGLTF, useScroll } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useLayoutEffect, useEffect, useRef, useState } from "react";
-import { MathUtils, PMREMGenerator, Vector3, WebGLRenderer } from "three";
-import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import { MathUtils, Vector3 } from "three";
 import { usePlay } from "../contexts/Play";
+import { getStudioEnvMap } from "../utils/studioEnv";
 import { FootBurst } from "./FootBurst";
 
 export const AVATAR_LAYER = 1;
-
-let studioEnvTarget = null;
-let studioRenderer = null;
-
-const getStudioEnvMap = () => {
-  if (studioEnvTarget) {
-    return studioEnvTarget.texture;
-  }
-
-  const canvas = document.createElement("canvas");
-  studioRenderer = new WebGLRenderer({
-    canvas,
-    antialias: false,
-    alpha: true,
-  });
-  studioRenderer.setSize(256, 256);
-
-  const pmrem = new PMREMGenerator(studioRenderer);
-  studioEnvTarget = pmrem.fromScene(new RoomEnvironment(), 0.04);
-  pmrem.dispose();
-
-  return studioEnvTarget.texture;
-};
 
 const bindAvatarLight = (light) => {
   if (light) {
@@ -50,7 +27,7 @@ const applyStudioEnv = (scene, envMap) => {
         continue;
       }
       mat.envMap = envMap;
-      mat.envMapIntensity = 1;
+      mat.envMapIntensity = 0.5;
       const name = mat.name ?? "";
       if (/earring/i.test(name)) {
         mat.metalness = 0.4;
@@ -87,7 +64,7 @@ function AvatarLights() {
 
   return (
     <>
-      <ambientLight ref={ambientRef} intensity={0.27} />
+      <ambientLight ref={ambientRef} intensity={0.3} />
       <directionalLight
         ref={keyRef}
         position={[1.2, 2.4, 2.2]}
@@ -231,9 +208,8 @@ export function Avatar({
   const { scene: world } = useThree();
 
   useLayoutEffect(() => {
-    const envMap = getStudioEnvMap();
-    world.environment = envMap;
-    applyStudioEnv(scene, envMap);
+    world.environment = getStudioEnvMap();
+    applyStudioEnv(scene, world.environment);
   }, [scene, world]);
 
   useFrame((_, delta) => {

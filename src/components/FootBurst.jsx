@@ -1,6 +1,7 @@
-import { useFrame, useThree } from "@react-three/fiber";
+import { useFrame } from "@react-three/fiber";
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { AdditiveBlending, Color, DynamicDrawUsage, MixOperation, Object3D, Vector3 } from "three";
+import { getStudioEnvMap } from "../utils/studioEnv";
 
 const BURST_COUNT = 8;
 const PARTICLES = 14;
@@ -43,7 +44,6 @@ const findFoot = (scene, side) => {
 };
 
 export function FootBurst({ scene, active, parent }) {
-  const { scene: world } = useThree();
   const meshRef = useRef();
   const feet = useRef({ leftFoot: null, rightFoot: null });
   const lastY = useRef({ leftFoot: 0, rightFoot: 0 });
@@ -133,8 +133,9 @@ export function FootBurst({ scene, active, parent }) {
     }
 
     const mat = mesh.material;
-    if (mat && world.environment && mat.envMap !== world.environment) {
-      mat.envMap = world.environment;
+    const envMap = getStudioEnvMap();
+    if (mat && envMap && mat.envMap !== envMap) {
+      mat.envMap = envMap;
       mat.needsUpdate = true;
     }
 
