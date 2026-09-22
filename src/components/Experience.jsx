@@ -5,7 +5,7 @@ import { Suspense, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Euler, Vector3 } from "three";
 import { usePlay } from "../contexts/Play";
-import { fadeOnBeforeCompile } from "../utils/fadeMaterial";
+import { addPathTAttribute, createPathAlongFade } from "../utils/fadeMaterial";
 import { AI_VIDEO_1_DESCRIPTION, AI_VIDEO_1_URL } from "../utils/aiVideo";
 import { Avatar, AVATAR_LAYER } from "./Avatar";
 import { Background } from "./Background";
@@ -54,6 +54,8 @@ const SCENE_FADE_IN_SECONDS = 3;
 const PATH_START_OPACITY = 0.4;
 const PATH_END_OPACITY = 0.8;
 const PATH_SKY_STRENGTH = 0.3;
+const PATH_FADE_AHEAD_NEAR = 0.1;
+const PATH_FADE_AHEAD_FAR = 0.4;
 
 const applyPathSkyColor = (mat, colorA, colorB, skyA, skyB, tint, white) => {
   skyA.set(colorA);
@@ -156,6 +158,20 @@ export const Experience = () => {
     return new BankedCatmullRomCurve3(curvePoints, false, "catmullrom", 0.5);
   }, []);
 
+  const pathFadeUniforms = useMemo(
+    () => ({
+      uCurrentT: { value: 0 },
+      uFadeAheadNear: { value: PATH_FADE_AHEAD_NEAR },
+      uFadeAheadFar: { value: PATH_FADE_AHEAD_FAR },
+    }),
+    []
+  );
+
+  const fadeOnBeforeCompilePath = useMemo(
+    () => createPathAlongFade(pathFadeUniforms),
+    [pathFadeUniforms]
+  );
+
   const textSections = useMemo(() => {
     return [
       {
@@ -206,19 +222,21 @@ export const Experience = () => {
     () => [
       // 시작
       {
+        scale: new Vector3(0.7, 0.7, 0.7),
         position: new Vector3(-3.5, -3.2, -7),
       },
       {
+        scale: new Vector3(0.7, 0.7, 0.7),
         position: new Vector3(3.5, -4, -10),
       },
       {
         scale: new Vector3(4, 4, 4),
-        position: new Vector3(-18, 0.2, -68),
+        position: new Vector3(-18, -20, -68),
         rotation: new Euler(-Math.PI / 5, Math.PI / 6, 0),
       },
       {
         scale: new Vector3(2.5, 2.5, 2.5),
-        position: new Vector3(10, -1.2, -52),
+        position: new Vector3(10, -20, -52),
       },
       // 첫 번째 지점
       {
@@ -240,7 +258,7 @@ export const Experience = () => {
       },
       {
         rotation: new Euler(0, Math.PI / 7, Math.PI / 5),
-        scale: new Vector3(5, 5, 5),
+        scale: new Vector3(4, 4, 4),
         position: new Vector3(
           curvePoints[1].x - 13,
           curvePoints[1].y + 4,
@@ -249,7 +267,7 @@ export const Experience = () => {
       },
       {
         rotation: new Euler(Math.PI / 2, Math.PI / 2, Math.PI / 3),
-        scale: new Vector3(5, 5, 5),
+        scale: new Vector3(4, 4, 4),
         position: new Vector3(
           curvePoints[1].x + 54,
           curvePoints[1].y + 2,
@@ -257,7 +275,7 @@ export const Experience = () => {
         ),
       },
       {
-        scale: new Vector3(5, 5, 5),
+        scale: new Vector3(4, 4, 4),
         position: new Vector3(
           curvePoints[1].x + 8,
           curvePoints[1].y - 14,
@@ -318,7 +336,7 @@ export const Experience = () => {
         rotation: new Euler(Math.PI, 0, Math.PI / 5),
       },
       {
-        scale: new Vector3(5, 5, 5),
+        scale: new Vector3(4, 4, 4),
         position: new Vector3(
           curvePoints[3].x + 0,
           curvePoints[3].y - 5,
@@ -395,6 +413,16 @@ export const Experience = () => {
     return shape;
   }, [curve]);
 
+  const pathGeometry = useMemo(() => {
+    const geometry = new THREE.ExtrudeGeometry(shape, {
+      steps: LINE_NB_POINTS,
+      bevelEnabled: false,
+      extrudePath: curve,
+    });
+    addPathTAttribute(geometry, curve);
+    return geometry;
+  }, [shape, curve]);
+
   const cameraGroup = useRef();
   const cameraRail = useRef();
   const camera = useRef();
@@ -434,6 +462,8 @@ export const Experience = () => {
         scroll.delta = 0;
       }
       lastScroll.current = 0;
+      pathFadeUniforms.uCurrentT.value = 0;
+      pathFadeUniforms.uFadeAheadNear.value = PATH_FADE_AHEAD_NEAR;
     }
 
     const scrollOffset = readPlayScroll(scroll, play);
@@ -464,7 +494,7 @@ export const Experience = () => {
             PATH_START_OPACITY,
             PATH_END_OPACITY,
             THREE.MathUtils.clamp(scrollOffset, 0, 1)
-          )
+          ) * sceneOpacity.current
         : 0;
     pathOpacity.current = THREE.MathUtils.damp(
       pathOpacity.current,
@@ -541,6 +571,8 @@ export const Experience = () => {
     lerpedScrollOffset = Math.max(lerpedScrollOffset, 0);
 
     lastScroll.current = lerpedScrollOffset;
+    pathFadeUniforms.uCurrentT.value = lerpedScrollOffset;
+    pathFadeUniforms.uFadeAheadNear.value = PATH_FADE_AHEAD_NEAR;
     if (tl.current) {
       tl.current.seek(lerpedScrollOffset * tl.current.duration());
     }
@@ -754,24 +786,16 @@ export const Experience = () => {
 
         {/* 경로 선 */}
         <group position-y={-2}>
-          <mesh>
-            <extrudeGeometry
-              args={[
-                shape,
-                {
-                  steps: LINE_NB_POINTS,
-                  bevelEnabled: false,
-                  extrudePath: curve,
-                },
-              ]}
-            />
+          <mesh geometry={pathGeometry}>
             <meshStandardMaterial
               color={"white"}
               ref={lineMaterialRef}
               transparent
+              depthWrite
               envMapIntensity={0}
               toneMapped={false}
-              onBeforeCompile={fadeOnBeforeCompile}
+              customProgramCacheKey={() => "path-curve-ratio"}
+              onBeforeCompile={fadeOnBeforeCompilePath}
             />
           </mesh>
         </group>

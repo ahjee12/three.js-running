@@ -134,9 +134,59 @@ const getClipAction = (actions, preferred) => {
   return key ? actions[key] : null;
 };
 
-function AvatarCloth({ path, active, clip }) {
+const startAction = (action) => {
+  if (!action) {
+    return;
+  }
+  action.enabled = true;
+  action.reset();
+  action.time = 0;
+  action.timeScale = 1;
+  action.setEffectiveWeight(1);
+  action.play();
+};
+
+const applyBodyLoco = (actions, mixer, next) => {
+  const idle = actions.idle;
+  const running = actions.running;
+  if (!idle || !running) {
+    return;
+  }
+  const action = next === "running" ? running : idle;
+  const other = next === "running" ? idle : running;
+  other.stop();
+  startAction(action);
+  mixer.update(0);
+};
+
+const applyClothLoco = (api, active) => {
+  if (!api) {
+    return;
+  }
+  const { scene, actions, mixer, animations, clip } = api;
+  const action =
+    getClipAction(actions, clip) ?? actions[animations[0]?.name];
+  scene.visible = active;
+  if (!action) {
+    return;
+  }
+  if (!active) {
+    action.stop();
+    mixer.update(0);
+    return;
+  }
+  for (const other of Object.values(actions)) {
+    if (other && other !== action) {
+      other.stop();
+    }
+  }
+  startAction(action);
+  mixer.update(0);
+};
+
+function AvatarCloth({ path, clip, apiRef, locoRef, match }) {
   const { scene, animations } = useGLTF(path);
-  const { actions } = useAnimations(animations, scene);
+  const { actions, mixer } = useAnimations(animations, scene);
 
   useLayoutEffect(() => {
     applyClothEnv(
@@ -145,33 +195,18 @@ function AvatarCloth({ path, active, clip }) {
       CLOTH_ENV_INTENSITY,
       CLOTH_COLOR_SCALE
     );
-    scene.visible = active;
-  }, [scene, active]);
+  }, [scene]);
 
-  useEffect(() => {
-    const action =
-      getClipAction(actions, clip) ?? actions[animations[0]?.name];
-    scene.visible = active;
-    if (!action || !active) {
-      action?.stop();
-      return;
-    }
-    for (const other of Object.values(actions)) {
-      if (other && other !== action) {
-        other.stop();
-      }
-    }
-    action.enabled = true;
-    action.reset();
-    action.time = 0;
-    action.timeScale = 1;
-    action.setEffectiveWeight(1);
-    action.play();
+  useLayoutEffect(() => {
+    const api = { scene, actions, mixer, animations, clip };
+    apiRef.current = api;
+    applyClothLoco(api, locoRef.current === match);
     return () => {
-      action.stop();
-      scene.visible = false;
+      if (apiRef.current === api) {
+        apiRef.current = null;
+      }
     };
-  }, [active, actions, animations, scene, clip]);
+  }, [apiRef, locoRef, match, scene, actions, mixer, animations, clip]);
 
   return <primitive object={scene} />;
 }
@@ -200,17 +235,23 @@ export function Avatar({
   const facingBack = useRef(false);
   const outer = useRef();
   const inner = useRef();
+  const idleClothApi = useRef(null);
+  const runClothApi = useRef(null);
   const [loco, setLoco] = useState("idle");
   const { play, end } = usePlay();
   const scroll = useScroll();
   const { scene, animations } = useGLTF("/models/human/myChar.glb");
-  const { actions } = useAnimations(animations, scene);
+  const { actions, mixer } = useAnimations(animations, scene);
   const { scene: world } = useThree();
 
   useLayoutEffect(() => {
     world.environment = getStudioEnvMap();
     applyStudioEnv(scene, world.environment);
   }, [scene, world]);
+
+  useLayoutEffect(() => {
+    applyBodyLoco(actions, mixer, locoRef.current);
+  }, [actions, mixer]);
 
   useFrame((_, delta) => {
     if (!actions.idle || !actions.running) {
@@ -271,6 +312,9 @@ export function Avatar({
     const next = play && !end && keepRunning ? "running" : "idle";
     if (next !== locoRef.current) {
       locoRef.current = next;
+      applyBodyLoco(actions, mixer, next);
+      applyClothLoco(idleClothApi.current, next === "idle");
+      applyClothLoco(runClothApi.current, next === "running");
       setLoco(next);
     }
 
@@ -303,7 +347,7 @@ export function Avatar({
     if (inner.current) {
       inner.current.rotation.y = yaw.current;
     }
-  });
+  }, -1);
 
   useEffect(() => {
     const extras = Object.keys(actions).filter((name) => !LOCO_CLIPS.has(name));
@@ -325,21 +369,6 @@ export function Avatar({
     };
   }, [actions]);
 
-  useEffect(() => {
-    const action = getClipAction(actions, AVATAR_CLIPS[loco]) ?? actions[loco];
-    if (!action) {
-      return;
-    }
-    action.enabled = true;
-    action.reset();
-    action.time = 0;
-    action.setEffectiveWeight(1);
-    action.play();
-    return () => {
-      action.stop();
-    };
-  }, [loco, actions]);
-
   return (
     <group ref={outer} {...props} dispose={null}>
       <AvatarLights />
@@ -347,13 +376,17 @@ export function Avatar({
         <primitive object={scene} />
         <AvatarCloth
           path="/models/human/cloth-I.glb"
-          active={loco === "idle"}
           clip={AVATAR_CLIPS.idleCloth}
+          apiRef={idleClothApi}
+          locoRef={locoRef}
+          match="idle"
         />
         <AvatarCloth
           path="/models/human/cloth-R.glb"
-          active={loco === "running"}
           clip={AVATAR_CLIPS.runningCloth}
+          apiRef={runClothApi}
+          locoRef={locoRef}
+          match="running"
         />
       </group>
       <FootBurst scene={scene} active={loco === "running"} parent={outer} />

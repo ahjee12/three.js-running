@@ -14,7 +14,7 @@ function App() {
 
   return (
     <>
-      <Canvas dpr={[1, 1.1]} onCreated={() => setSceneReady(true)}>
+      <Canvas onCreated={() => setSceneReady(true)}>
         <color attach="background" args={["#ececec"]} />
         <ScrollControls
           key={resetId}

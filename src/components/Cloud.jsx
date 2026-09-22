@@ -62,6 +62,7 @@ export function Cloud({
         envMapIntensity={0}
         transparent
         opacity={0}
+        customProgramCacheKey={() => "cloud-view-fade-80"}
         onBeforeCompile={fadeOnBeforeCompile}
       />
     </mesh>
