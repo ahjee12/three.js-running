@@ -44,6 +44,7 @@ const CAMERA_Z_PORTRAIT = 2;
 const AVATAR_REST_Y = -1.45;
 const AVATAR_INTRO_Y = -2;
 const AVATAR_FAR_Z = -1.6;
+const AVATAR_START_OFFSET = 0.003;
 const AVATAR_RECEDE_LAMBDA = 1.8;
 
 const cameraZForSize = (width, height) =>
@@ -524,7 +525,7 @@ export const Experience = () => {
       return;
     }
 
-    const avatarTargetZ = scrollOffset > 0 ? AVATAR_FAR_Z : 0;
+    const avatarTargetZ = scrollOffset > AVATAR_START_OFFSET ? AVATAR_FAR_Z : 0;
 
     if (avatar.current && (hasScroll || scrollOffset > 0)) {
       avatar.current.position.z = THREE.MathUtils.damp(

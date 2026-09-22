@@ -284,6 +284,7 @@ export function Avatar({
     }
 
     let goingToStart = false;
+    let heldBack = false;
     let worldZ = 0;
     if (outer.current) {
       outer.current.getWorldPosition(returnPos);
@@ -291,8 +292,9 @@ export function Avatar({
       const localZ = outer.current.parent?.position.z ?? 0;
       const prevLocalZ = lastLocalZ.current;
       lastLocalZ.current = localZ;
+      heldBack = localZ < -0.04;
       goingToStart =
-        prevLocalZ != null && localZ - prevLocalZ > 0.0008 && localZ < -0.04;
+        prevLocalZ != null && localZ - prevLocalZ > 0.0008 && heldBack;
     }
     const prevOffset = lastOffset.current;
     const leavingHome =
@@ -315,7 +317,7 @@ export function Avatar({
       !arrivedHome &&
       (goingToStart ||
         (atStart
-          ? jumped || startBoost.current
+          ? jumped || startBoost.current || heldBack
           : (scroll?.delta ?? 0) > SCROLL_DELTA));
     if (moving) {
       stillTime.current = 0;
