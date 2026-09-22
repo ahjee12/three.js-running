@@ -218,7 +218,11 @@ const SCROLL_DELTA = 0.00005;
 const START_OFFSET = 0.003;
 const BACK_OFFSET = 0.00002;
 const FACE_LAMBDA = 8;
+const FACE_SETTLE = 0.2;
 const returnPos = new Vector3();
+
+const yawGap = (from, to) =>
+  Math.abs(Math.atan2(Math.sin(from - to), Math.cos(from - to)));
 
 export function Avatar({
   rotation,
@@ -228,11 +232,12 @@ export function Avatar({
   const stillTime = useRef(1);
   const lastTarget = useRef(null);
   const startBoost = useRef(false);
-  const lastWorldZ = useRef(null);
+  const lastLocalZ = useRef(null);
   const locoRef = useRef("idle");
   const lastOffset = useRef(null);
   const yaw = useRef(null);
   const facingBack = useRef(false);
+  const homeLatched = useRef(false);
   const outer = useRef();
   const inner = useRef();
   const idleClothApi = useRef(null);
@@ -283,12 +288,23 @@ export function Avatar({
     if (outer.current) {
       outer.current.getWorldPosition(returnPos);
       worldZ = returnPos.z;
-      const prevZ = lastWorldZ.current;
-      lastWorldZ.current = worldZ;
+      const localZ = outer.current.parent?.position.z ?? 0;
+      const prevLocalZ = lastLocalZ.current;
+      lastLocalZ.current = localZ;
       goingToStart =
-        prevZ != null && worldZ - prevZ > 0.0008 && worldZ < -0.04;
+        prevLocalZ != null && localZ - prevLocalZ > 0.0008 && localZ < -0.04;
     }
-    const arrivedHome = atStart && !goingToStart && worldZ > -0.08;
+    const prevOffset = lastOffset.current;
+    const leavingHome =
+      startBoost.current ||
+      jumped ||
+      (prevOffset != null && offset > prevOffset + BACK_OFFSET);
+    if (!play || !atStart || leavingHome) {
+      homeLatched.current = false;
+    } else if (!goingToStart && worldZ > -0.08) {
+      homeLatched.current = true;
+    }
+    const arrivedHome = homeLatched.current;
     if (arrivedHome) {
       startBoost.current = false;
     }
@@ -307,21 +323,9 @@ export function Avatar({
       stillTime.current += delta;
     }
 
-    const keepRunning =
-      moving || (!arrivedHome && stillTime.current < IDLE_HOLD);
-    const next = play && !end && keepRunning ? "running" : "idle";
-    if (next !== locoRef.current) {
-      locoRef.current = next;
-      applyBodyLoco(actions, mixer, next);
-      applyClothLoco(idleClothApi.current, next === "idle");
-      applyClothLoco(runClothApi.current, next === "running");
-      setLoco(next);
-    }
-
     if (yaw.current == null) {
       yaw.current = rotationY;
     }
-    const prevOffset = lastOffset.current;
     lastOffset.current = offset;
     const goingBack =
       play &&
@@ -342,6 +346,21 @@ export function Avatar({
     } else if (goingForward) {
       facingBack.current = false;
     }
+    const turningForward =
+      !facingBack.current && yawGap(yaw.current, rotationY) > FACE_SETTLE;
+    const keepRunning =
+      moving ||
+      turningForward ||
+      (!arrivedHome && stillTime.current < IDLE_HOLD);
+    const next = play && !end && keepRunning ? "running" : "idle";
+    if (next !== locoRef.current) {
+      locoRef.current = next;
+      applyBodyLoco(actions, mixer, next);
+      applyClothLoco(idleClothApi.current, next === "idle");
+      applyClothLoco(runClothApi.current, next === "running");
+      setLoco(next);
+    }
+
     const targetYaw = facingBack.current ? rotationY + Math.PI : rotationY;
     yaw.current = MathUtils.damp(yaw.current, targetYaw, FACE_LAMBDA, delta);
     if (inner.current) {

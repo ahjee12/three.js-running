@@ -29,11 +29,11 @@ const CLOUD2_ROTATIONS = [
 const CLOUD1_X_SPREAD = 10;
 const CLOUD2_SCALE = 4;
 const CURVE_AHEAD_CAMERA = 0.008;
-const CURVE_AHEAD_AIRPLANE = 0.02;
-const AIRPLANE_MAX_ANGLE = 8;
+const CURVE_AHEAD_AVATAR = 0.02;
+const AVATAR_MAX_ANGLE = 8;
 const BANK_ANGLE_SCALE = 0.8;
 const FRICTION_DISTANCE = 42;
-// 텍스트 근처 감속의 하한값임. 너무 낮으면 비행기가 스크롤 위치보다
+// 텍스트 근처 감속의 하한값임. 너무 낮으면 아바타가 스크롤 위치보다
 // 몇 초 뒤처졌다가, 휠을 놓은 뒤 텍스트를 지나쳐 버림.
 const MIN_FRICTION = 0.6;
 const SCROLL_FOLLOW_LAMBDA = 2.5;
@@ -84,7 +84,7 @@ const getBankAngle = (path, t) => {
 
   const curPoint = path.getPoint(t);
   const lookAtPoint = path.getPoint(Math.min(t + CURVE_AHEAD_CAMERA, 1));
-  const tangent = path.getTangent(Math.min(t + CURVE_AHEAD_AIRPLANE, 1));
+  const tangent = path.getTangent(Math.min(t + CURVE_AHEAD_AVATAR, 1));
   const targetLookAt = new THREE.Vector3()
     .subVectors(curPoint, lookAtPoint)
     .normalize();
@@ -100,8 +100,8 @@ const getBankAngle = (path, t) => {
   let angleDegrees = ((angle * 180) / Math.PI) * BANK_ANGLE_SCALE;
   angleDegrees = THREE.MathUtils.clamp(
     angleDegrees,
-    -AIRPLANE_MAX_ANGLE,
-    AIRPLANE_MAX_ANGLE
+    -AVATAR_MAX_ANGLE,
+    AVATAR_MAX_ANGLE
   );
 
   return (angleDegrees * Math.PI) / 180;
@@ -526,9 +526,9 @@ export const Experience = () => {
 
     const avatarTargetZ = scrollOffset > 0 ? AVATAR_FAR_Z : 0;
 
-    if (airplane.current && (hasScroll || scrollOffset > 0)) {
-      airplane.current.position.z = THREE.MathUtils.damp(
-        airplane.current.position.z,
+    if (avatar.current && (hasScroll || scrollOffset > 0)) {
+      avatar.current.position.z = THREE.MathUtils.damp(
+        avatar.current.position.z,
         avatarTargetZ,
         AVATAR_RECEDE_LAMBDA,
         delta
@@ -618,15 +618,15 @@ export const Experience = () => {
       angle = 0;
     }
 
-    if (airplane.current) {
-      const targetAirplaneQuaternion = new THREE.Quaternion().setFromEuler(
+    if (avatar.current) {
+      const targetAvatarQuaternion = new THREE.Quaternion().setFromEuler(
         new THREE.Euler(
-          airplane.current.rotation.x,
-          airplane.current.rotation.y,
+          avatar.current.rotation.x,
+          avatar.current.rotation.y,
           angle
         )
       );
-      airplane.current.quaternion.slerp(targetAirplaneQuaternion, delta * 2);
+      avatar.current.quaternion.slerp(targetAvatarQuaternion, delta * 2);
     }
 
     if (
@@ -638,16 +638,16 @@ export const Experience = () => {
         curvePoints[curvePoints.length - 1].z + 100
     ) {
       setEnd(true);
-      planeOutTl.current.play();
+      avatarOutTl.current.play();
     }
   });
 
-  const airplane = useRef();
+  const avatar = useRef();
 
   const tl = useRef();
 
-  const planeInTl = useRef();
-  const planeOutTl = useRef();
+  const avatarInTl = useRef();
+  const avatarOutTl = useRef();
 
   useLayoutEffect(() => {
     tl.current = gsap.timeline();
@@ -670,10 +670,10 @@ export const Experience = () => {
 
     tl.current.pause();
 
-    planeOutTl.current = gsap.timeline();
-    planeOutTl.current.pause();
-    planeOutTl.current.to(
-      airplane.current.position,
+    avatarOutTl.current = gsap.timeline();
+    avatarOutTl.current.pause();
+    avatarOutTl.current.to(
+      avatar.current.position,
       {
         duration: 10,
         z: -250,
@@ -681,7 +681,7 @@ export const Experience = () => {
       },
       0
     );
-    planeOutTl.current.to(
+    avatarOutTl.current.to(
       cameraRail.current.position,
       {
         duration: 8,
@@ -689,15 +689,15 @@ export const Experience = () => {
       },
       0
     );
-    planeOutTl.current.to(airplane.current.position, {
+    avatarOutTl.current.to(avatar.current.position, {
       duration: 1,
       z: -1000,
     });
 
     return () => {
       tl.current?.kill();
-      planeInTl.current?.kill();
-      planeOutTl.current?.kill();
+      avatarInTl.current?.kill();
+      avatarOutTl.current?.kill();
     };
   }, []);
 
@@ -715,10 +715,10 @@ export const Experience = () => {
     if (cameraRail.current) {
       cameraRail.current.position.set(0, 0, 0);
     }
-    if (airplane.current) {
-      airplane.current.rotation.set(0, 0, 0);
-      airplane.current.quaternion.identity();
-      airplane.current.position.set(0, AVATAR_REST_Y, 0);
+    if (avatar.current) {
+      avatar.current.rotation.set(0, 0, 0);
+      avatar.current.quaternion.identity();
+      avatar.current.position.set(0, AVATAR_REST_Y, 0);
     }
     if (scroll?.el) {
       scroll.el.scrollTop = 0;
@@ -731,13 +731,13 @@ export const Experience = () => {
       scroll.delta = 0;
     }
 
-    planeOutTl.current?.pause(0);
+    avatarOutTl.current?.pause(0);
     tl.current?.pause(0);
-    planeInTl.current?.kill();
-    planeInTl.current = gsap.timeline({ paused: true });
+    avatarInTl.current?.kill();
+    avatarInTl.current = gsap.timeline({ paused: true });
 
-    if (airplane.current) {
-      planeInTl.current.from(airplane.current.position, {
+    if (avatar.current) {
+      avatarInTl.current.from(avatar.current.position, {
         duration: 3,
         z: cameraZForSize(size.width, size.height),
         y: AVATAR_INTRO_Y,
@@ -745,7 +745,7 @@ export const Experience = () => {
     }
 
     if (play) {
-      planeInTl.current.play();
+      avatarInTl.current.play();
     }
   }, [play]);
 
@@ -763,7 +763,7 @@ export const Experience = () => {
               makeDefault
             />
           </group>
-          <group ref={airplane} position-y={AVATAR_REST_Y}>
+          <group ref={avatar} position-y={AVATAR_REST_Y}>
             <Suspense fallback={null}>
               <Avatar
                 rotation-y={Math.PI}
