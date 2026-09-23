@@ -375,7 +375,7 @@ export const Experience = () => {
       },
       // 마지막
       {
-        scale: new Vector3(3, 3, 3),
+        scale: new Vector3(5, 5, 5),
         position: new Vector3(
           curvePoints[7].x + 12,
           curvePoints[7].y - 5,
@@ -384,7 +384,7 @@ export const Experience = () => {
         rotation: new Euler(-Math.PI / 4, -Math.PI / 6, 0),
       },
       {
-        scale: new Vector3(3, 3, 3),
+        scale: new Vector3(5, 5, 5),
         position: new Vector3(
           curvePoints[7].x - 12,
           curvePoints[7].y + 5,
