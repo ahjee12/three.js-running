@@ -151,8 +151,9 @@ export const Experience = () => {
   const pathTint = useRef(new THREE.Color());
   const pathWhite = useRef(new THREE.Color("#ffffff"));
   const backgroundColors = useRef({
-    colorA: "#3535cc",
-    colorB: "#ABD6FF",
+    colorA: "#047CCC",
+    colorB: "#FFFFFF",
+    colorNoise: "#E8F8FF",
   });
 
   const curve = useMemo(() => {
@@ -655,18 +656,21 @@ export const Experience = () => {
 
     tl.current.to(backgroundColors.current, {
       duration: 1,
-      colorA: "#6f35cc",
-      colorB: "#ffad30",
+      colorA: "#0087E8",
+      colorB: "#C8D8E3",
+      colorNoise: "#E8F8FF",
     });
     tl.current.to(backgroundColors.current, {
       duration: 1,
-      colorA: "#424242",
+      colorA: "#6D8CAD",
       colorB: "#ffcc00",
+      colorNoise: "#E89F5F",
     });
     tl.current.to(backgroundColors.current, {
       duration: 1,
-      colorA: "#81318b",
-      colorB: "#55ab8f",
+      colorA: "#1F8ECF",
+      colorB: "#B5EAFF",
+      colorNoise: "#E8F8FF",
     });
 
     tl.current.pause();
@@ -707,8 +711,9 @@ export const Experience = () => {
     sceneOpacity.current = 0;
     pathOpacity.current = 0;
     setHasScroll(false);
-    backgroundColors.current.colorA = "#3535cc";
-    backgroundColors.current.colorB = "#ABD6FF";
+    backgroundColors.current.colorA = "#047CCC";
+    backgroundColors.current.colorB = "#FFFFFF";
+    backgroundColors.current.colorNoise = "#E8F8FF";
 
     if (cameraGroup.current) {
       cameraGroup.current.position.set(0, 0, 0);
@@ -806,7 +811,12 @@ export const Experience = () => {
           {clouds.map((cloud, index) => {
             if (cloud.path?.includes("cloud2")) {
               return (
-                <Cloud sceneOpacity={sceneOpacity} {...cloud} key={index} />
+                <Cloud
+                  sceneOpacity={sceneOpacity}
+                  backgroundColors={backgroundColors}
+                  {...cloud}
+                  key={index}
+                />
               );
             }
             const position = cloud.position.clone();
@@ -818,6 +828,7 @@ export const Experience = () => {
             return (
               <Cloud
                 sceneOpacity={sceneOpacity}
+                backgroundColors={backgroundColors}
                 {...cloud}
                 position={position}
                 key={index}

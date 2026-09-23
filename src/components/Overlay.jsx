@@ -55,14 +55,14 @@ export const Overlay = ({ sceneReady = false }) => {
                 setPlay(true);
               }}
             >
-              Explore
+              Step In
             </button>
           </div>
         </div>
       <div className={`outro ${end ? "outro--appear" : ""}`}>
         <p className="outro__text">다른 행성으로 떠나요</p>
         <button className="outro__button" onClick={resetToIntro}>
-          Back
+          Step Again
         </button>
       </div>
     </div>

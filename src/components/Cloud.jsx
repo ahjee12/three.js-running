@@ -1,10 +1,13 @@
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useLayoutEffect, useRef } from "react";
+import { Color } from "three";
 import { fadeOnBeforeCompile } from "../utils/fadeMaterial";
 
 const CLOUD_1 = "/models/cloud/cloud1.glb";
 const CLOUD_2 = "/models/cloud/cloud2.glb";
+const CLOUD_SKY_TINT = 0.18;
+const cloudWhite = new Color("#ffffff");
 
 const cloudGeometry = (nodes, path = "") => {
   if (path.includes("cloud2")) {
@@ -32,11 +35,14 @@ const bindCloudMaterial = (mat) => {
 
 export function Cloud({
   sceneOpacity,
+  backgroundColors,
   path = CLOUD_1,
   ...props
 }) {
   const { nodes } = useGLTF(path);
   const materialRef = useRef();
+  const skyA = useRef(new Color());
+  const skyB = useRef(new Color());
 
   useLayoutEffect(() => {
     bindCloudMaterial(materialRef.current);
@@ -50,6 +56,14 @@ export function Cloud({
     bindCloudMaterial(mat);
     mat.transparent = true;
     mat.opacity = sceneOpacity.current;
+    const colors = backgroundColors?.current;
+    if (!colors) {
+      return;
+    }
+    skyA.current.set(colors.colorA);
+    skyB.current.set(colors.colorB);
+    skyA.current.lerp(skyB.current, 0.65);
+    mat.color.copy(cloudWhite).lerp(skyA.current, CLOUD_SKY_TINT);
   });
 
   return (
