@@ -10,6 +10,7 @@ import { AI_VIDEO_1_DESCRIPTION, AI_VIDEO_1_URL } from "../utils/aiVideo";
 import { Avatar, AVATAR_LAYER } from "./Avatar";
 import { Background } from "./Background";
 import { Cloud } from "./Cloud";
+import { Ripple } from "./Ripple";
 import { Speed } from "./Speed";
 import { TextSection } from "./TextSection";
 
@@ -804,6 +805,11 @@ export const Experience = () => {
               onBeforeCompile={fadeOnBeforeCompilePath}
             />
           </mesh>
+          <Ripple
+            curve={curve}
+            fadeUniforms={pathFadeUniforms}
+            pathMaterialRef={lineMaterialRef}
+          />
         </group>
 
         {/* 구름 */}
