@@ -7,6 +7,7 @@ import { Euler, Vector3 } from "three";
 import { usePlay } from "../contexts/Play";
 import { addPathTAttribute, createPathAlongFade } from "../utils/fadeMaterial";
 import { AI_VIDEO_1_DESCRIPTION, AI_VIDEO_1_URL } from "../utils/aiVideo";
+import { UIUX_WORLD_DESCRIPTION, UIUX_WORLD_URL } from "../utils/uiuxWorld";
 import { Avatar, AVATAR_LAYER } from "./Avatar";
 import { Background } from "./Background";
 import { Cloud } from "./Cloud";
@@ -178,15 +179,30 @@ export const Experience = () => {
   const textSections = useMemo(() => {
     return [
       {
+        cameraRailDist: 1.5,
+        position: new Vector3(
+          curvePoints[1].x -5,
+          curvePoints[1].y,
+          curvePoints[1].z + 70
+        ),
+        title: "UIUX WORLD로",
+        link: UIUX_WORLD_URL,
+        subtitle: UIUX_WORLD_DESCRIPTION,
+        color: "#0053AB",
+        subtitleOnHover: true,
+      },
+      {
         cameraRailDist: -1,
         position: new Vector3(
-          curvePoints[1].x - 3,
+          curvePoints[1].x - 4,
           curvePoints[1].y,
           curvePoints[1].z
         ),
         title: "AI 영상 1 보러가기",
         link: AI_VIDEO_1_URL,
         subtitle: AI_VIDEO_1_DESCRIPTION,
+        color: "#0053AB",
+        subtitleOnHover: true,
       },
       {
         cameraRailDist: 1.5,

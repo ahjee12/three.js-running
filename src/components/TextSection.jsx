@@ -10,10 +10,21 @@ const hasKorean = (text) =>
 // 글자가 읽히는 거리보다 먼 클릭은 무시함.
 const MAX_LINK_DISTANCE = 120;
 
-export const TextSection = ({ title, subtitle, link, sceneOpacity, ...props }) => {
+export const TextSection = ({
+  title,
+  subtitle,
+  link,
+  sceneOpacity,
+  color = "white",
+  subtitleOnHover = false,
+  ...props
+}) => {
   const [hovered, setHovered] = useState(false);
+  const hoveredRef = useRef(false);
   const titleMat = useRef();
   const subtitleMat = useRef();
+  hoveredRef.current = hovered;
+  const showSubtitle = !subtitleOnHover || hovered;
 
   useFrame(() => {
     const opacity = sceneOpacity?.current ?? 0;
@@ -21,7 +32,8 @@ export const TextSection = ({ title, subtitle, link, sceneOpacity, ...props }) =
       titleMat.current.opacity = opacity;
     }
     if (subtitleMat.current) {
-      subtitleMat.current.opacity = opacity;
+      subtitleMat.current.opacity =
+        !subtitleOnHover || hoveredRef.current ? opacity : 0;
     }
   });
 
@@ -60,7 +72,7 @@ export const TextSection = ({ title, subtitle, link, sceneOpacity, ...props }) =
     <group {...props}>
       {!!title && (
         <Text
-          color="white"
+          color={color}
           anchorX={"left"}
           anchorY="bottom"
           fontSize={0.52}
@@ -72,7 +84,7 @@ export const TextSection = ({ title, subtitle, link, sceneOpacity, ...props }) =
           {title}
           <meshStandardMaterial
             ref={titleMat}
-            color={"white"}
+            color={color}
             transparent
             opacity={0}
             onBeforeCompile={fadeOnBeforeCompileFlat}
@@ -81,17 +93,18 @@ export const TextSection = ({ title, subtitle, link, sceneOpacity, ...props }) =
       )}
 
       <Text
-        color="white"
+        color={color}
         anchorX={"left"}
         anchorY="top"
         fontSize={0.2}
         maxWidth={2.5}
         font={subtitleFont}
+        visible={showSubtitle}
       >
         {subtitle}
         <meshStandardMaterial
           ref={subtitleMat}
-          color={"white"}
+          color={color}
           transparent
           opacity={0}
           onBeforeCompile={fadeOnBeforeCompileFlat}
